@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="styles.css">
+    
+</head>
+<body>
+
+<div id="custom-cursor" class="custom-cursor"></div>
+<!-- 
+    <nav>
+        <a href="index.html">Megan Duong</a>
+    </nav> -->
+
+    <main id="main-area">
+      <video id="bg-video"  src="img/homepage-video.mov" autoplay muted loop playsinline></video>
+<!--   
+      <div id="media-container">
+        <img src="img/hvd_signage.jpg" alt="hawksburn-village-dental" />
+      </div> -->
+    </main>
+
+  
+    <script>
+        // =========================
+        // ONE BIG MERGED SEQUENCE
+        // =========================
+        // Strings = background videos (reset overlays)
+        // Arrays  = groups of overlay items shown on top of the background (stacked)
+        const mergedSequence = [
+          'img/homepage-video.mov',
+          ['img/DSCF5693.mp4', 'img/woolfe-3.jpeg', 'img/Artboard9.png', 'img/insitu_posters.png'],
+          'img/record_2024-10-21_19-12-19.mp4',
+          ['img/artbook1.jpg','img/solar-analysis.png','img/DSCF5581.mp4','img/Interior_Render.jpeg','img/DSCF3051.JPG'],
+          'img/parting-msg.mov',
+          ['img/wk2bar.png','img/teuf.jpg','img/IMG_0459-copy.jpg','img/IMG_2824edited.jpg'],
+          'img/Film-to-Book.mp4',
+          ['img/visual-response.jpg','img/hvd_signage.jpg','img/IMG_0460-copy.jpg','img/woolfe-1.jpeg'],
+          'img/script-in-action.mov',
+          ['img/sony.png','img/IMG_2746.jpeg','img/pacify.jpg'],
+        ];
+      
+        // Flatten into a linear "timeline" of steps:
+        // {type:'bg', src: ...} or {type:'overlay', src: ...}
+        const timeline = (() => {
+          const steps = [];
+          for (const item of mergedSequence) {
+            if (Array.isArray(item)) {
+              for (const src of item) steps.push({ type: 'overlay', src });
+            } else {
+              steps.push({ type: 'bg', src: item });
+            }
+          }
+          return steps;
+        })();
+      
+        // =========================
+        // DOM
+        // =========================
+        const main   = document.getElementById('main-area');
+        const video  = document.getElementById('bg-video');
+        const cursor = document.getElementById('custom-cursor');
+      
+        // Optional custom cursor assets
+        const leftArrowURL  = 'img/arrow-left.svg';
+        const rightArrowURL = 'img/arrow-right.svg';
+      
+        // =========================
+        // STATE
+        // =========================
+        let pos = 0;               // index of the *current* step that has been applied
+        let zIndexCounter = 10;
+        const stackedNodes = [];   // overlay nodes currently on screen
+      
+        // =========================
+        // HELPERS
+        // =========================
+        function isVideo(src) {
+          const s = src.toLowerCase();
+          return s.endsWith('.mp4') || s.endsWith('.mov') || s.endsWith('.webm');
+        }
+      
+        function clearStack() {
+          while (stackedNodes.length) {
+            const n = stackedNodes.pop();
+            if (n && n.parentNode) n.parentNode.removeChild(n);
+          }
+          zIndexCounter = 10;
+        }
+      
+        // Only swap background video if it actually changes (prevents needless reloads)
+        function setBackgroundVideo(src) {
+          if (!video) return;
+          if (video.dataset.currentSrc !== src) {
+            video.dataset.currentSrc = src;
+            video.src = src;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            video.autoplay = true;
+            video.load();
+            video.play().catch(() => {});
+          }
+        }
+      
+        function createOverlayMedia(src) {
+          const node = isVideo(src) ? document.createElement('video') : document.createElement('img');
+          if (node.tagName.toLowerCase() === 'video') {
+            node.src = src;
+            node.autoplay = true;
+            node.muted = true;
+            node.loop = true;
+            node.playsInline = true;
+            node.classList.add('media-video');
+          } else {
+            node.src = src;
+          }
+          node.classList.add('media-image');
+          node.style.zIndex = String(zIndexCounter++);
+          main.appendChild(node);
+          stackedNodes.push(node);
+        }
+      
+        // Re-render the exact visual state for a given timeline index `p`.
+        // We:
+        // 1) Find the most recent background step at or before p (wrapping around).
+        // 2) Set that as the background.
+        // 3) Render every overlay step after that bg up to p (stopping if another bg is hit).
+        function renderAt(p) {
+          const M = timeline.length;
+          if (M === 0) return;
+      
+          clearStack();
+      
+          // 1) find base background index j
+          let j = p;
+          for (let guard = 0; guard < M; guard++) {
+            if (timeline[j].type === 'bg') break;
+            j = (j - 1 + M) % M;
+          }
+          const baseBg = timeline[j];
+          setBackgroundVideo(baseBg.src);
+      
+          // 2) render overlays from j+1 to p (inclusive), stopping at next bg
+          let k = (j + 1) % M;
+          const stop = (p + 1) % M;
+          while (k !== stop) {
+            const step = timeline[k];
+            if (step.type === 'bg') break;          // reached the next background segment
+            if (step.type === 'overlay') createOverlayMedia(step.src);
+            k = (k + 1) % M;
+          }
+        }
+      
+        function next() {
+          pos = (pos + 1) % timeline.length;
+          renderAt(pos);
+        }
+      
+        function prev() {
+          pos = (pos - 1 + timeline.length) % timeline.length;
+          renderAt(pos);
+        }
+      
+        // =========================
+        // INTERACTION
+        // =========================
+        main.addEventListener('click', (e) => {
+          const isLeftSide = e.clientX < window.innerWidth / 2;
+          if (isLeftSide) {
+            prev();   // backward
+          } else {
+            next();   // forward
+          }
+        });
+      
+        document.addEventListener('mousemove', (e) => {
+          if (!cursor) return;
+          const x = e.clientX;
+          const y = e.clientY;
+          const mid = window.innerWidth / 2;
+      
+          cursor.style.left = x + 'px';
+          cursor.style.top  = y + 'px';
+          cursor.style.backgroundImage = `url(${x < mid ? leftArrowURL : rightArrowURL})`;
+        });
+      
+        // =========================
+        // INIT
+        // =========================
+        (function init() {
+          // Start at the first step (which is a background video).
+          pos = 0;
+          renderAt(pos);
+        })();
+      </script>
+            
+
+  </body>
+ 
+</html>

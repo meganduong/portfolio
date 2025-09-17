@@ -1,0 +1,156 @@
+@font-face {
+  font-family: 'worksans';
+  src: url(data/WorkSans-VariableFont_wght.ttf);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: worksans;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1rem;   /* creates breathing room */
+  box-sizing: border-box; /* makes sure padding doesn’t overflow width */
+}
+
+a {
+  text-decoration: none;
+  color: black;
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+a:hover {
+  font-weight: 600;
+  transition: font-weight 0.2s ease;
+  color: #0645AD;
+}
+
+#custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+
+  font-family: "Work Sans", sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: white;
+
+  transform: translate(-50%, -50%); /* centers text on mouse */
+  transition: opacity 0.15s ease;
+  mix-blend-mode: difference;
+}
+
+.flick-stack {
+  width: 100%;
+  height: 20vh;
+  position: relative;
+  overflow: hidden;
+  background: #000; /* black background if images don't load */
+  transition: height 0.4s ease;
+}
+
+.flick-img {
+  position: absolute;
+  inset: 0;              /* top:0 right:0 bottom:0 left:0 */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;      /* scale without distortion */
+  opacity: 0;             /* hidden by default */
+  transition: opacity 0.1s linear;
+}
+
+.flick-img.is-active {
+  opacity: 1;             /* only the active image is shown */
+}
+
+/* Lightbox overlay */
+.lightbox {
+  display: none; /* hidden by default */
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  justify-content: center;
+  align-items: center;
+}
+
+.lightbox-content {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  padding: 2rem;
+  box-sizing: border-box;
+  color: #fff;
+}
+
+/* Carousel */
+.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-track {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-track img,
+.carousel-track video {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: cover;
+}
+
+/* Caption */
+.caption-title {
+  padding-top: 0.5rem;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.caption-date {
+  font-size: 0.8em;
+  text-align: center;
+}
+
+.caption-desc {
+  font-size: 0.7rem;
+  margin: 0 auto; /* centers the text block */
+  text-align: center; /* optional, for balance */
+  color: #eee;       
+}
+
+/* ==== FORCE HIDE CURSOR INSIDE LIGHTBOX ==== */
+.lightbox,
+.lightbox * {
+  cursor: none !important;
+
+}
+
+#custom-cursor {
+  pointer-events: none;
+}
+

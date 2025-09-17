@@ -1,0 +1,329 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work</title>
+  <link rel="stylesheet" href="work-styles.css">
+  <script src="libraries/p5.min.js"></script>
+  
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Meg(an)Duong</a>
+    <a href="contact.html">About</a>
+  </nav>
+
+  <div class="flick-stack" id="stackA" aria-label="stack A"></div>
+  <div class="flick-stack" id="stackB" aria-label="stack B"></div>
+  <div class="flick-stack" id="stackC" aria-label="stack C"></div>
+  <div class="flick-stack" id="stackD" aria-label="stack D"></div>
+  <div class="flick-stack" id="stackE" aria-label="stack E"></div>
+
+  <div id="lightbox" class="lightbox">
+    <div class="lightbox-content">
+      <!-- no × symbol -->
+      <div class="carousel">
+        <div class="carousel-track"></div>
+      </div>
+      <div class="caption" id="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <div id="custom-cursor"></div>
+   
+  <script src="mouse.trail.js"></script>
+ 
+  
+</body>
+</html>
+
+<script>
+ function createFlickStack(root, images, { 
+    moveThreshold = 16,
+    rateLimitMs   = 35,
+    reverseOnDir  = true,
+    startIndex    = 0
+  } = {}) {
+    if (!root) throw new Error('createFlickStack: root element is required.');
+    if (!images || !images.length) throw new Error('createFlickStack: images array is empty.');
+  
+    const nodes = images.map(src => {
+      let el;
+      if (/\.(mp4|mov|webm)$/i.test(src)) {
+        el = document.createElement('video');
+        el.src = src;
+        el.autoplay = true;
+        el.muted = true;
+        el.loop = true;
+        el.playsInline = true;
+        el.className = 'flick-img';
+      } else {
+        el = document.createElement('img');
+        el.src = src;
+        el.className = 'flick-img';
+      }
+      el.addEventListener('error', () => console.warn('Failed to load', src));
+      root.appendChild(el);
+      return el;
+    });
+  
+    let idx = Math.max(0, Math.min(startIndex, nodes.length - 1));
+    let lastX = null;
+    let lastTick = 0;
+  
+    function show(i) {
+      i = ((i % nodes.length) + nodes.length) % nodes.length;
+      nodes.forEach(n => n.classList.remove('is-active'));
+      nodes[i].classList.add('is-active');
+      idx = i;
+    }
+  
+    function next() { show(idx + 1); }
+    function prev() { show(idx - 1); }
+  
+    function onMove(x) {
+      const now = performance.now();
+      if (now - lastTick < rateLimitMs) return;
+
+      if (lastX == null) {
+        lastX = x;
+        return;
+      }
+
+      const dx = x - lastX;
+
+      if (Math.abs(dx) >= moveThreshold) {
+        dx > 0 ? next() : prev();
+        lastTick = now;
+        lastX = x;
+      }
+    }
+  
+    root.addEventListener('mousemove', e => onMove(e.clientX), { passive: true });
+  
+    let activeTouchId = null;
+    root.addEventListener('touchstart', e => {
+      const t = e.changedTouches[0];
+      activeTouchId = t.identifier;
+      onMove(t.clientX);
+    }, { passive: true });
+  
+    root.addEventListener('touchmove', e => {
+      const t = [...e.changedTouches].find(t => t.identifier === activeTouchId) || e.changedTouches[0];
+      if (t) onMove(t.clientX);
+    }, { passive: true });
+  
+    root.addEventListener('touchend',   () => { activeTouchId = null; }, { passive: true });
+    root.addEventListener('touchcancel',() => { activeTouchId = null; }, { passive: true });
+  
+    root.tabIndex = 0;
+    root.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 'ArrowLeft')  prev();
+    });
+  
+    show(idx);
+    return { next, prev, show, get index(){ return idx; }, get size(){ return nodes.length; } };
+  }
+  
+  // ===== Example stacks =====
+  const stackA = createFlickStack(document.getElementById('stackA'), [
+    'work-img/is1.jpg','work-img/is2.jpg','work-img/is3.jpg','work-img/is4.jpg',
+    'work-img/is5.jpg','work-img/is6.jpg','work-img/is7.jpg','work-img/is8.jpg'
+  ], { moveThreshold: 20, rateLimitMs: 200 });
+  
+  const stackB = createFlickStack(document.getElementById('stackB'), [
+    'img/DSCF5581.mp4','img/DSCF5693.mp4','work-img/df1.jpg','work-img/df2.jpg',
+    'work-img/df3.jpg','work-img/df4.jpg'
+  ], { moveThreshold: 20, rateLimitMs: 200, reverseOnDir: false });
+  
+  const stackC = createFlickStack(document.getElementById('stackC'), [
+    'work-img/hvd4.jpg','work-img/hvdtth.gif','work-img/hvd1.jpg','work-img/hvd2.jpg','work-img/hvd3.jpg'
+  ], { moveThreshold: 20, rateLimitMs: 200, reverseOnDir: false });
+  
+  const stackD = createFlickStack(document.getElementById('stackD'), [
+    'work-img/cdv1.mov','work-img/cvd1.jpg','work-img/cvd2.jpg','work-img/cdv4.jpg'
+  ], { moveThreshold: 20, rateLimitMs: 200, reverseOnDir: false });
+  
+  const stackE = createFlickStack(document.getElementById('stackE'), [
+    'work-img/ftb1.jpg','img/Film-to-Book.mp4','work-img/ftb2.jpg','work-img/ftb3.jpg'
+  ], { moveThreshold: 20, rateLimitMs: 200, reverseOnDir: false });
+  
+  document.querySelectorAll('.flick-stack').forEach(stack => {
+    stack.addEventListener('mouseenter', () => {
+      stack.style.height = '60vh';
+      stack.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    stack.addEventListener('mouseleave', () => {
+      stack.style.height = '20vh';
+    });
+  });
+
+  // ===== Lightbox data =====
+  const galleries = {
+    stackA: { 
+      caption: `
+    <div class="caption-title">Flexible Visual System for ‘In Situ:X’, 2025</div>
+  <div class="caption-desc">
+    ‘In Situ: X’ is a short furniture showcase based in Naarm, with the curatorial focus of rethinking how we live and move within domestic environments given the current issues we face in the housing climate and urban shifts.
+  </div>
+`,
+      items: [
+      { src: 'work-img/is1.jpg' },
+      { src: 'work-img/is2.jpg'},
+      { src: 'work-img/is3.jpg'},
+      { src: 'work-img/is4.jpg' },
+      { src: 'work-img/is5.jpg'},
+      { src: 'work-img/is6.jpg'},
+      { src: 'work-img/is7.jpg' },
+      { src: 'work-img/is8.jpg'}
+    ]},
+    stackB: { 
+      caption: `
+    <div class="caption-title">Domestic Flight, 2025</div>
+  <div class="caption-desc">
+An interactive installation using creative coding (p5.js), biometric recognition (ml5.js) and physical computing (Arduino), subverting conventions of human-centred and reward system design.   </div>
+`,
+      items: [
+      { src: 'img/DSCF5581.mp4' },
+      { src: 'img/DSCF5693.mp4' },
+      { src: 'work-img/df1.jpg' },
+      { src: 'work-img/df2.jpg'},
+      { src: 'work-img/df3.jpg' },
+      { src: 'work-img/df4.jpg' }
+    ]},
+    stackC: { 
+      caption: `
+    <div class="caption-title">Brand Refresh, Ongoing</div>
+  <div class="caption-desc">
+    Client: Hawksburn Village Dental, Toorak 3142
+`,
+      items: [
+      { src: 'work-img/hvd4.jpg' },
+      { src: 'work-img/hvdtth.gif' },
+      { src: 'work-img/hvd1.jpg' },
+      { src: 'work-img/hvd2.jpg'},
+      { src: 'work-img/hvd3.jpg' }
+    ]},
+    stackD: { 
+      caption: `
+    <div class="caption-title">Parametric Analysis on Casa de Vidro, 2024</div>
+  <div class="caption-desc">
+    A project using parametric design techniques to analyse the performance of an existing structure to guide direction for redesign.
+`,
+      items: [
+      { src: 'work-img/cdv1.mov'},
+      { src: 'work-img/cvd1.jpg'},
+      { src: 'work-img/cvd2.jpg'},
+      { src: 'work-img/cdv4.jpg' }
+    ]},
+    stackE: { 
+      caption: `
+    <div class="caption-title">Book Design, 2024</div>
+  <div class="caption-desc">
+   An interpretation of the book form, investigating and expanding the physical and visual limits of what constitutes a book.
+`,
+      items: [
+      { src: 'work-img/ftb1.jpg', caption: 'Film still' },
+      { src: 'img/Film-to-Book.mp4', caption: 'Video piece' },
+      { src: 'work-img/ftb2.jpg', caption: 'Book still' },
+      { src: 'work-img/ftb3.jpg', caption: 'Another still' }
+    ]}
+  };
+  
+  
+  const lightbox   = document.getElementById('lightbox');
+  const track      = lightbox.querySelector('.carousel-track');
+  const captionEl  = document.getElementById('lightbox-caption');
+  const cursor     = document.getElementById('custom-cursor');
+  const TOP_ZONE   = 80; // px from top = exit zone
+  
+  let currentIndex = 0;
+  let currentItems = [];
+  let insideLightbox = false;
+
+  // Open lightbox
+  function openLightbox(stackId) {
+    const gallery = galleries[stackId];
+    if (!gallery) return;
+    
+    currentGallery = gallery;
+    currentItems = gallery.items;
+    currentIndex = 0;
+    renderSlide();
+    lightbox.style.display = 'flex';
+  
+    insideLightbox = true;
+    cursor.style.display = 'block';
+  }
+  
+  // Render slide
+  function renderSlide() {
+    track.innerHTML = '';
+    const item = currentItems[currentIndex];
+    let el;
+    if (/\.(mp4|mov|webm)$/i.test(item.src)) {
+      el = document.createElement('video');
+      el.src = item.src;
+      el.autoplay = true;
+      el.loop = true;
+      el.muted = true;
+      el.playsInline = true;
+    } else {
+      el = document.createElement('img');
+      el.src = item.src;
+    }
+    track.appendChild(el);
+    captionEl.innerHTML = currentGallery.caption || '';
+  }
+  
+  // Cursor movement in lightbox
+  document.addEventListener('mousemove', (e) => {
+    if (!insideLightbox || !cursor) return;
+  
+    const x = e.clientX;
+    const y = e.clientY;
+    const mid = window.innerWidth / 2;
+  
+    cursor.style.left = x + 'px';
+    cursor.style.top  = y + 'px';
+  
+    if (y < TOP_ZONE) {
+      cursor.textContent = 'exit';
+    } else {
+      cursor.textContent = x < mid ? 'left' : 'right';
+    }
+  });
+  
+  // Cursor click inside lightbox
+  document.addEventListener('click', (e) => {
+    if (!insideLightbox) return;
+  
+    if (e.clientY < TOP_ZONE) {
+      // exit
+      lightbox.style.display = 'none';
+      track.innerHTML = '';
+      insideLightbox = false;
+      cursor.style.display = 'none';
+      cursor.textContent = '';
+      return;
+    }
+  
+    const mid = window.innerWidth / 2;
+    if (e.clientX < mid) {
+      currentIndex = (currentIndex - 1 + currentItems.length) % currentItems.length;
+    } else {
+      currentIndex = (currentIndex + 1) % currentItems.length;
+    }
+    renderSlide();
+  });
+  
+  // Bind stacks
+  document.querySelectorAll('.flick-stack').forEach(stack => {
+    stack.addEventListener('click', () => openLightbox(stack.id));
+  });  </script>
+  
+    

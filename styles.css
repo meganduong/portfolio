@@ -1,0 +1,83 @@
+@font-face {
+    font-family:'Relationship' ;
+    src: url(relationship.ttf);
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Optional: prevents scrollbars if not needed */
+  }
+
+a {
+    justify-content: center;
+    text-decoration: none;
+    color: black;
+    font-family: relationship;
+    font-size: 3em;
+}
+nav {
+    display: flex;
+  justify-content: center; /* center horizontally */
+  align-items: center;
+    z-index: 2;
+    position: fixed;
+    align-items: center;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1em 2em;
+}
+
+body {
+    cursor: none;
+}
+
+.custom-cursor {
+    size: 20%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+    z-index: 9999;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    /* mix-blend-mode: difference; optional: helps it show over light/dark */
+  }
+
+video {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-width: 100vw; /* Prevents it from overflowing the viewport */
+    object-fit: cover; /* Optional: crops to fill the space nicely */
+  }
+  
+
+
+  .media-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+  
+  /* new: tweak video-specific sizing */
+  .media-video {
+    width: auto;
+    height: auto;
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    display: block;
+  }
