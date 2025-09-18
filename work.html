@@ -24,7 +24,7 @@
 
   <div id="lightbox" class="lightbox">
     <div class="lightbox-content">
-      <!-- no × symbol -->
+      <button class="lightbox-close" id="lightbox-close">&times;</button> <!-- ✖ exit button -->
       <div class="carousel">
         <div class="carousel-track"></div>
       </div>
@@ -240,10 +240,22 @@ An interactive installation using creative coding (p5.js), biometric recognition
   const captionEl  = document.getElementById('lightbox-caption');
   const cursor     = document.getElementById('custom-cursor');
   const TOP_ZONE   = 80; // px from top = exit zone
-  
+
+
   let currentIndex = 0;
-  let currentItems = [];
-  let insideLightbox = false;
+let currentItems = [];
+let insideLightbox = false;
+
+const closeBtn = document.getElementById('lightbox-close');
+if (closeBtn) {
+  closeBtn.addEventListener('click', () => {
+    lightbox.style.display = 'none';
+    track.innerHTML = '';
+    insideLightbox = false;
+    cursor.style.display = 'none';
+    cursor.textContent = '';
+  });
+}
 
   // Open lightbox
   function openLightbox(stackId) {

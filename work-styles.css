@@ -154,3 +154,23 @@ a:hover {
   pointer-events: none;
 }
 
+.lightbox-close {
+  position: fixed;       /* fix it to the viewport, not content */
+  top: 1rem;
+  right: 2rem;           /* move further right */
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;     /* a bit bigger */
+  font-weight: 400;
+  cursor: pointer;
+  z-index: 2000;         /* above everything in the lightbox */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.lightbox-close:hover {
+  transform: scale(1.2);
+  font-weight: 600;
+  opacity: 0.85;
+}
+
