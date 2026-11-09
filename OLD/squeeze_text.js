@@ -2,21 +2,19 @@ let myFont;
 let spacer;
 let spacerHeight = 4000;
 
-let video;
-let maskedFillG;    // video clipped by filled text
-let maskedStrokeG;  // video clipped by stroked text (outline)
+let video;            // kept but unused
+let maskedFillG;
+let maskedStrokeG;
 
 function preload() {
   myFont = loadFont("data/WorkSans-VariableFont_wght.ttf");
 }
 
 function setup() {
-  // Scroll space
   spacer = createDiv('');
   spacer.style('height', spacerHeight + 'px');
   spacer.style('position', 'relative');
 
-  // Fixed canvas
   const c = createCanvas(windowWidth, windowHeight);
   c.style('position', 'fixed');
   c.style('top', '0');
@@ -29,14 +27,11 @@ function setup() {
   strokeJoin(ROUND);
   strokeCap(ROUND);
 
-  // Offscreen buffers
   maskedFillG   = createGraphics(windowWidth, windowHeight);
   maskedStrokeG = createGraphics(windowWidth, windowHeight);
 
-  // Video
-  video = createVideo('img/bgslideshow720p.mov', () => video.loop());
-  video.elt.muted = true;
-  video.elt.playsInline = true;
+  // keep video element to avoid structural changes, but don't use it
+  video = createVideo('img/bgslideshow720p.mov');
   video.hide();
 }
 
@@ -52,13 +47,8 @@ function draw() {
   const sy = lerp(10, 0.5, te);
   const sw = lerp(70, 0, te);
 
-  // ---------- Fill mask ----------
+  // ---------- Fill layer (now solid black) ----------
   maskedFillG.clear();
-  drawCoverImage(maskedFillG, video);   // <-- use helper
-
-  maskedFillG.drawingContext.save();
-  maskedFillG.drawingContext.globalCompositeOperation = 'destination-in';
-
   maskedFillG.push();
   maskedFillG.translate(maskedFillG.width / 2, maskedFillG.height / 2);
   maskedFillG.scale(1, sy);
@@ -66,24 +56,17 @@ function draw() {
   maskedFillG.textAlign(CENTER, CENTER);
   maskedFillG.textSize(width / 7.5);
   maskedFillG.noStroke();
-  maskedFillG.fill(255);
+  maskedFillG.fill(225,235,28);               // solid black
   maskedFillG.text("Meg(an)Duong", 0, 0);
   maskedFillG.pop();
-
-  maskedFillG.drawingContext.restore();
 
   if (frameCount % 2 === 0) {
     const payload = { type: 'squeeze-progress', t: te, sy, sw };
     window.parent?.postMessage(payload, '*');
   }
 
-  // ---------- Stroke mask ----------
+  // ---------- Stroke layer (still animates stroke) ----------
   maskedStrokeG.clear();
-  drawCoverImage(maskedStrokeG, video);   // <-- use helper
-
-  maskedStrokeG.drawingContext.save();
-  maskedStrokeG.drawingContext.globalCompositeOperation = 'destination-in';
-
   maskedStrokeG.push();
   maskedStrokeG.translate(maskedStrokeG.width / 2, maskedStrokeG.height / 2);
   maskedStrokeG.scale(1, sy);
@@ -91,12 +74,10 @@ function draw() {
   maskedStrokeG.textAlign(CENTER, CENTER);
   maskedStrokeG.textSize(width / 7.5);
   maskedStrokeG.noFill();
-  maskedStrokeG.stroke(255);
+  maskedStrokeG.stroke(225,235,28);           // solid black stroke
   maskedStrokeG.strokeWeight(sw);
   maskedStrokeG.text("Meg(an)Duong", 0, 0);
   maskedStrokeG.pop();
-
-  maskedStrokeG.drawingContext.restore();
 
   // ---------- Composite ----------
   image(maskedFillG,   0, 0);
@@ -110,30 +91,8 @@ function windowResized() {
   maskedStrokeG = createGraphics(windowWidth, windowHeight);
 }
 
-// Helpers
 function lerp(a, b, t) { return a + (b - a) * t; }
+
 function easeInOutCubic(x) {
   return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2;
-}
-
-// Cover-draw helper
-function drawCoverImage(pg, vid) {
-  if (!vid || vid.width === 0 || vid.height === 0) return;
-
-  const canvasRatio = pg.width / pg.height;
-  const videoRatio  = vid.width / vid.height;
-
-  let drawWidth, drawHeight;
-  if (videoRatio > canvasRatio) {
-    drawHeight = pg.height;
-    drawWidth  = videoRatio * drawHeight;
-  } else {
-    drawWidth  = pg.width;
-    drawHeight = drawWidth / videoRatio;
-  }
-
-  const offsetX = (pg.width  - drawWidth)  / 2;
-  const offsetY = (pg.height - drawHeight) / 2;
-
-  pg.image(vid, offsetX, offsetY, drawWidth, drawHeight);
 }
